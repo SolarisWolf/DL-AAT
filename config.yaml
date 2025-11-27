@@ -1,0 +1,132 @@
+# Smart Grid Fault Detection Configuration
+
+# Data Generation Settings
+data:
+  num_samples: 10000
+  sampling_rate: 1000  # Hz
+  signal_duration: 0.2  # seconds (200ms)
+  num_points: 200  # samples per signal
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  noise_level: 0.05
+  
+  # Fault Types
+  fault_types:
+    - "Normal"
+    - "AG"  # Single phase to ground
+    - "BG"
+    - "CG"
+    - "AB"  # Line to line
+    - "BC"
+    - "CA"
+    - "ABG"  # Double line to ground
+    - "BCG"
+    - "CAG"
+    - "ABC"  # Three phase
+    - "ABCG"
+  
+  # Fault Parameters
+  fault_resistance_range: [0.001, 100.0]  # Ohms
+  fault_inception_angle_range: [0, 360]  # Degrees
+  fault_location_range: [0.1, 0.9]  # Percentage of line length
+
+# Grid Parameters
+grid:
+  voltage_nominal: 11000  # Volts (11kV)
+  frequency: 50  # Hz
+  phases: 3
+  line_impedance: [0.4, 0.3]  # [R, X] per km
+  line_length: 10  # km
+
+# Model Architecture
+model:
+  type: "1D-CNN"  # Options: "1D-CNN", "CNN-LSTM"
+  
+  # CNN Parameters
+  conv_layers:
+    - filters: 64
+      kernel_size: 5
+      activation: "relu"
+    - filters: 128
+      kernel_size: 5
+      activation: "relu"
+    - filters: 256
+      kernel_size: 3
+      activation: "relu"
+  
+  # Pooling
+  pooling: "max"
+  pool_size: 2
+  
+  # Dense Layers
+  dense_layers: [512, 256, 128]
+  dropout_rate: 0.3
+  
+  # LSTM Parameters (if CNN-LSTM)
+  lstm_units: 128
+  lstm_layers: 2
+
+# Training Parameters
+training:
+  batch_size: 32
+  epochs: 100
+  learning_rate: 0.001
+  optimizer: "adam"
+  loss: "sparse_categorical_crossentropy"
+  metrics: ["accuracy"]
+  early_stopping_patience: 15
+  reduce_lr_patience: 7
+  reduce_lr_factor: 0.5
+  min_lr: 1e-7
+  validation_freq: 1
+
+# IoT Sensor Settings
+iot:
+  mqtt_broker: "localhost"
+  mqtt_port: 1883
+  mqtt_topic: "smartgrid/sensors"
+  sensor_update_interval: 0.1  # seconds
+  
+  # Sensor specifications
+  voltage_sensor:
+    type: "ZMPT101B"
+    accuracy: 0.01  # 1%
+    range: [0, 250]  # Volts AC (after step-down)
+  
+  current_sensor:
+    type: "ACS712"
+    accuracy: 0.015  # 1.5%
+    range: [0, 30]  # Amperes
+  
+  temperature_sensor:
+    type: "DHT22"
+    accuracy: 0.5  # degrees Celsius
+    range: [-40, 80]
+
+# Real-time Detection
+detection:
+  confidence_threshold: 0.95
+  response_time_target: 20  # milliseconds
+  buffer_size: 200  # samples
+  alert_levels: ["INFO", "WARNING", "CRITICAL"]
+
+# Visualization
+visualization:
+  dashboard_port: 8050
+  update_interval: 1000  # milliseconds
+  plot_history_length: 100
+  
+# Logging
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard_dir: "logs/tensorboard"
+  save_frequency: 10  # epochs
+
+# Model Saving
+model_save:
+  checkpoint_dir: "checkpoints"
+  best_model_path: "models/best_model.h5"
+  save_format: "h5"
+  save_weights_only: false
